@@ -4,7 +4,7 @@
  */
 
 const API_CONFIG = {
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8765/api',
     endpoints: {
         products:   '/products',
         categories: '/categories',
