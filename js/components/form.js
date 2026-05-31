@@ -186,7 +186,7 @@ function createForm(fields, options) {
 
         fields.forEach(field => {
             const fieldName = field.name || field.id;
-            const element = document.getElementById(field.id);
+            const element = form.querySelector(`#${field.id}`);
 
             if (element) {
                 if (field.type === 'checkbox') {

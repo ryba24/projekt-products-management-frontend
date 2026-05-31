@@ -1,6 +1,8 @@
 /**
  * Categories Page
  */
+let _categories = [];
+
 function renderCategoriesPage() {
     const appContainer = document.getElementById('app-container');
     appContainer.innerHTML = `
@@ -26,7 +28,7 @@ function renderCategoriesPage() {
 
 function loadCategories() {
     ApiService.getAllCategories()
-        .then(cats => renderCategoriesTable(cats))
+        .then(cats => { _categories = cats; renderCategoriesTable(_categories); })
         .catch(err => {
             document.getElementById('categories-table-container').innerHTML =
                 `<div class="alert alert-danger m-3"><strong>Failed to load:</strong> ${err.message}
@@ -49,7 +51,19 @@ function renderCategoriesTable(categories) {
 
     const table = createTable(categories, {
         columns,
-        actions: { view: false, edit: false, delete: false }
+        onEdit: (id, item) => showCategoryModal(item),
+        onDelete: async (id) => {
+            const ok = await confirmAction('Delete this category? Products in this category will be unlinked.');
+            if (!ok) return;
+            ApiService.deleteCategory(id)
+                .then(() => {
+                    _categories = _categories.filter(c => c.id !== id);
+                    renderCategoriesTable(_categories);
+                    showSuccess('Category deleted.');
+                })
+                .catch(e => showError(e.message));
+        },
+        actions: { view: false, edit: true, delete: true }
     });
     container.innerHTML = '';
     container.appendChild(table);
@@ -64,19 +78,30 @@ function showCategoryModal(category) {
 
     const form = createForm(fields, {
         id: 'category-form',
-        submitLabel: 'Create Category',
+        submitLabel: isEdit ? 'Save Changes' : 'Create Category',
         showCancel: false,
-        initialValues: isEdit ? { ...category } : {},
+        initialValues: isEdit ? { name: category.name, description: category.description } : {},
         onSubmit: (data) => {
-            ApiService.createCategory(data)
-                .then(() => { modal.hide(); showSuccess('Category created!'); loadCategories(); })
-                .catch(e => showError(e.message));
+            const call = isEdit
+                ? ApiService.updateCategory(category.id, data)
+                : ApiService.createCategory(data);
+            call.then(result => {
+                modal.hide();
+                showSuccess(isEdit ? 'Category updated!' : 'Category created!');
+                if (isEdit) {
+                    const idx = _categories.findIndex(c => c.id === category.id);
+                    if (idx !== -1) _categories[idx] = result;
+                } else {
+                    _categories.push(result);
+                }
+                renderCategoriesTable(_categories);
+            }).catch(e => showError(e.message));
         }
     });
 
     const modal = createModal({
         id: 'category-form-modal',
-        title: 'New Category',
+        title: isEdit ? `Edit Category` : 'New Category',
         content: form, size: 'medium', footer: false
     });
     modal.show();

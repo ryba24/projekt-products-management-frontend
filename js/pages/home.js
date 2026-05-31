@@ -40,6 +40,24 @@ function renderHomePage() {
                     <div><div class="stat-value" id="stat-transfers">—</div><div class="stat-label">Transfers</div></div>
                 </div>
             </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card navy">
+                    <div class="stat-icon"><i class="bi bi-cart3"></i></div>
+                    <div><div class="stat-value" id="stat-orders">—</div><div class="stat-label">Orders</div></div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card teal">
+                    <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                    <div><div class="stat-value" id="stat-invoices">—</div><div class="stat-label">Invoices</div></div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card slate">
+                    <div class="stat-icon"><i class="bi bi-people"></i></div>
+                    <div><div class="stat-value" id="stat-users">—</div><div class="stat-label">Users</div></div>
+                </div>
+            </div>
         </div>
 
         <!-- Quick actions -->
@@ -71,6 +89,27 @@ function renderHomePage() {
                     <div class="quick-action-icon"><i class="bi bi-list-check"></i></div>
                     <div class="quick-action-title">Inventory</div>
                     <div class="quick-action-desc">Check stock levels</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-action" data-qa="orders">
+                    <div class="quick-action-icon"><i class="bi bi-cart3"></i></div>
+                    <div class="quick-action-title">Orders</div>
+                    <div class="quick-action-desc">Manage customer orders</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-action" data-qa="invoices">
+                    <div class="quick-action-icon"><i class="bi bi-receipt"></i></div>
+                    <div class="quick-action-title">Invoices</div>
+                    <div class="quick-action-desc">View & create invoices</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-action" data-qa="users">
+                    <div class="quick-action-icon"><i class="bi bi-people"></i></div>
+                    <div class="quick-action-title">Users</div>
+                    <div class="quick-action-desc">Manage user accounts</div>
                 </div>
             </div>
         </div>
@@ -107,12 +146,18 @@ function renderHomePage() {
         ApiService.getAllCategories(),
         ApiService.getAllWarehouses(),
         ApiService.getAllTransfers(),
-        ApiService.getAllInventory()
-    ]).then(([products, categories, warehouses, transfers, inventory]) => {
-        if (products.status === 'fulfilled')   document.getElementById('stat-products').textContent   = products.value.length;
+        ApiService.getAllInventory(),
+        ApiService.getAllOrders(),
+        ApiService.getAllInvoices(),
+        ApiService.getAllUsers()
+    ]).then(([products, categories, warehouses, transfers, inventory, orders, invoices, users]) => {
+        if (products.status   === 'fulfilled') document.getElementById('stat-products').textContent   = products.value.length;
         if (categories.status === 'fulfilled') document.getElementById('stat-categories').textContent = categories.value.length;
         if (warehouses.status === 'fulfilled') document.getElementById('stat-warehouses').textContent = warehouses.value.length;
-        if (transfers.status === 'fulfilled')  document.getElementById('stat-transfers').textContent  = transfers.value.length;
+        if (transfers.status  === 'fulfilled') document.getElementById('stat-transfers').textContent  = transfers.value.length;
+        if (orders.status     === 'fulfilled') document.getElementById('stat-orders').textContent     = orders.value.length;
+        if (invoices.status   === 'fulfilled') document.getElementById('stat-invoices').textContent   = invoices.value.length;
+        if (users.status      === 'fulfilled') document.getElementById('stat-users').textContent      = users.value.length;
 
         // Recent transfers
         const rtContainer = document.getElementById('recent-transfers-container');

@@ -10,7 +10,10 @@ const API_CONFIG = {
         categories: '/categories',
         warehouses: '/warehouses',
         inventory:  '/inventory',
-        transfers:  '/transfers'
+        transfers:  '/transfers',
+        orders:     '/orders',
+        invoices:   '/invoices',
+        users:      '/users'
     }
 };
 
@@ -56,17 +59,52 @@ const ApiService = {
 
     // ── Categories ──
     getAllCategories:  function() { return this.get(API_CONFIG.endpoints.categories); },
-    createCategory:    function(data) { return this.post(API_CONFIG.endpoints.categories, data); },
+    createCategory:   function(data) { return this.post(API_CONFIG.endpoints.categories, data); },
+    updateCategory:   function(id, data) { return this.put(`${API_CONFIG.endpoints.categories}/${id}`, data); },
+    deleteCategory:   function(id) { return this.delete(`${API_CONFIG.endpoints.categories}/${id}`); },
 
     // ── Warehouses ──
     getAllWarehouses:  function() { return this.get(API_CONFIG.endpoints.warehouses); },
-    createWarehouse:   function(data) { return this.post(API_CONFIG.endpoints.warehouses, data); },
+    createWarehouse:  function(data) { return this.post(API_CONFIG.endpoints.warehouses, data); },
+    updateWarehouse:  function(id, data) { return this.put(`${API_CONFIG.endpoints.warehouses}/${id}`, data); },
+    deleteWarehouse:  function(id) { return this.delete(`${API_CONFIG.endpoints.warehouses}/${id}`); },
 
     // ── Inventory ──
     getAllInventory:   function() { return this.get(API_CONFIG.endpoints.inventory); },
-    createInventory:   function(data) { return this.post(API_CONFIG.endpoints.inventory, data); },
+    createInventory:  function(data) { return this.post(API_CONFIG.endpoints.inventory, data); },
+    updateInventory:  function(id, data) { return this.put(`${API_CONFIG.endpoints.inventory}/${id}`, data); },
+    deleteInventory:  function(id) { return this.delete(`${API_CONFIG.endpoints.inventory}/${id}`); },
 
     // ── Stock Transfers ──
-    getAllTransfers:   function() { return this.get(API_CONFIG.endpoints.transfers); },
-    createTransfer:    function(data) { return this.post(API_CONFIG.endpoints.transfers, data); },
+    getAllTransfers:        function() { return this.get(API_CONFIG.endpoints.transfers); },
+    createTransfer:        function(data) { return this.post(API_CONFIG.endpoints.transfers, data); },
+    deleteTransfer:        function(id) { return this.delete(`${API_CONFIG.endpoints.transfers}/${id}`); },
+    updateTransferStatus:  function(id, status) {
+        return fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.transfers}/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+    },
+
+    // ── Orders ──
+    getAllOrders:      function() { return this.get(API_CONFIG.endpoints.orders); },
+    getOrderById:      function(id) { return this.get(`${API_CONFIG.endpoints.orders}/${id}`); },
+    createOrder:       function(data) { return this.post(API_CONFIG.endpoints.orders, data); },
+    updateOrder:       function(id, data) { return this.put(`${API_CONFIG.endpoints.orders}/${id}`, data); },
+    deleteOrder:       function(id) { return this.delete(`${API_CONFIG.endpoints.orders}/${id}`); },
+
+    // ── Invoices ──
+    getAllInvoices:    function() { return this.get(API_CONFIG.endpoints.invoices); },
+    getInvoiceById:   function(id) { return this.get(`${API_CONFIG.endpoints.invoices}/${id}`); },
+    createInvoice:    function(data) { return this.post(API_CONFIG.endpoints.invoices, data); },
+    updateInvoice:    function(id, data) { return this.put(`${API_CONFIG.endpoints.invoices}/${id}`, data); },
+    deleteInvoice:    function(id) { return this.delete(`${API_CONFIG.endpoints.invoices}/${id}`); },
+
+    // ── Users ──
+    getAllUsers:       function() { return this.get(API_CONFIG.endpoints.users); },
+    getUserById:       function(id) { return this.get(`${API_CONFIG.endpoints.users}/${id}`); },
+    createUser:        function(data) { return this.post(API_CONFIG.endpoints.users, data); },
+    updateUser:        function(id, data) { return this.put(`${API_CONFIG.endpoints.users}/${id}`, data); },
+    deleteUser:        function(id) { return this.delete(`${API_CONFIG.endpoints.users}/${id}`); },
 };

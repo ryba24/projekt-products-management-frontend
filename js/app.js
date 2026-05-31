@@ -29,6 +29,9 @@ function renderCurrentRoute() {
         case 'warehouses': renderWarehousesPage();      break;
         case 'inventory':  renderInventoryPage();       break;
         case 'transfers':  renderTransfersPage();       break;
+        case 'orders':     renderOrdersPage();          break;
+        case 'invoices':   renderInvoicesPage();        break;
+        case 'users':      renderUsersPage();           break;
         // legacy stubs (starter pages no longer used)
         case 'list':       renderProductsPage();        break;
         default:           renderNotFoundPage();

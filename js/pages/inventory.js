@@ -63,7 +63,6 @@ function renderInventoryPage() {
         _invWarehouses = warehouses.status === 'fulfilled' ? warehouses.value : [];
         _invItems      = inventory.status  === 'fulfilled' ? inventory.value  : [];
 
-        // Populate warehouse filter
         const wSel = document.getElementById('inv-warehouse-filter');
         _invWarehouses.forEach(w => {
             const opt = document.createElement('option');
@@ -109,58 +108,88 @@ function renderInventoryTable(items) {
 
     const columns = [
         { field: 'id',               title: 'ID',         width: '6%' },
-        { field: 'productId',        title: 'Product',    render: (v) => `<strong>${getProductName(v)}</strong>` },
-        { field: 'warehouseId',      title: 'Warehouse',  render: (v) => `<span class="badge bg-secondary">${getWarehouseName(v)}</span>` },
+        { field: 'productId',        title: 'Product',    render: v => `<strong>${getProductName(v)}</strong>` },
+        { field: 'warehouseId',      title: 'Warehouse',  render: v => `<span class="badge bg-secondary">${getWarehouseName(v)}</span>` },
         { field: 'quantity',         title: 'Quantity',   width: '10%', render: (v, item) => {
-            const low = v <= (item.reorderThreshold || 5);
-            return low ? `<span class="low-stock"><i class="bi bi-exclamation-triangle me-1"></i>${v}</span>` : `<span class="ok-stock">${v}</span>`;
-        }},
-        { field: 'reorderThreshold', title: 'Reorder At', width: '11%', render: (v) => v != null ? v : '—' }
+                const low = v <= (item.reorderThreshold || 5);
+                return low
+                    ? `<span class="low-stock"><i class="bi bi-exclamation-triangle me-1"></i>${v}</span>`
+                    : `<span class="ok-stock">${v}</span>`;
+            }},
+        { field: 'reorderThreshold', title: 'Reorder At', width: '11%', render: v => v != null ? v : '—' }
     ];
 
     const table = createTable(items, {
         columns,
-        actions: { view: false, edit: false, delete: false }
+        onEdit: (id, item) => showInventoryModal(item),
+        onDelete: async (id) => {
+            const ok = await confirmAction('Remove this inventory entry? This cannot be undone.');
+            if (!ok) return;
+            ApiService.deleteInventory(id)
+                .then(() => {
+                    _invItems = _invItems.filter(i => i.id !== id);
+                    renderInventoryTable(_invItems);
+                    showSuccess('Inventory entry removed.');
+                })
+                .catch(e => showError(e.message));
+        },
+        actions: { view: false, edit: true, delete: true }
     });
     container.innerHTML = '';
     container.appendChild(table);
 }
 
-function showInventoryModal() {
+function showInventoryModal(existing) {
+    const isEdit = !!existing;
     const productOptions   = _invProducts.map(p => ({ value: p.id, label: p.name || `#${p.id}` }));
     const warehouseOptions = _invWarehouses.map(w => ({ value: w.id, label: w.name || `#${w.id}` }));
 
     const fields = [
-        { id: 'productId',        label: 'Product',           type: 'select', required: true, options: [{ value: '', label: '— Select product —' }, ...productOptions] },
-        { id: 'warehouseId',      label: 'Warehouse',         type: 'select', required: true, options: [{ value: '', label: '— Select warehouse —' }, ...warehouseOptions] },
+        { id: 'productId',        label: 'Product',           type: 'select', required: true,
+            options: [{ value: '', label: '— Select product —' }, ...productOptions] },
+        { id: 'warehouseId',      label: 'Warehouse',         type: 'select', required: true,
+            options: [{ value: '', label: '— Select warehouse —' }, ...warehouseOptions] },
         { id: 'quantity',         label: 'Quantity',          type: 'number', required: true, placeholder: '0', attributes: { min: '0' } },
         { id: 'reorderThreshold', label: 'Reorder Threshold', type: 'number', placeholder: 'e.g. 10', attributes: { min: '0' } }
     ];
 
     const form = createForm(fields, {
         id: 'inventory-form',
-        submitLabel: 'Add Inventory Entry',
+        submitLabel: isEdit ? 'Save Changes' : 'Add Inventory Entry',
         showCancel: false,
-        initialValues: {},
+        initialValues: isEdit ? {
+            productId:        existing.productId,
+            warehouseId:      existing.warehouseId,
+            quantity:         existing.quantity,
+            reorderThreshold: existing.reorderThreshold
+        } : {},
         onSubmit: (data) => {
-            data.productId        = parseInt(data.productId);
-            data.warehouseId      = parseInt(data.warehouseId);
-            data.quantity         = parseInt(data.quantity);
-            data.reorderThreshold = data.reorderThreshold ? parseInt(data.reorderThreshold) : null;
-            ApiService.createInventory(data)
-                .then(created => {
-                    modal.hide();
-                    showSuccess('Inventory entry added!');
-                    _invItems.push(created);
-                    renderInventoryTable(_invItems);
-                })
-                .catch(e => showError(e.message));
+            const payload = {
+                productId:        parseInt(data.productId),
+                warehouseId:      parseInt(data.warehouseId),
+                quantity:         parseInt(data.quantity),
+                reorderThreshold: data.reorderThreshold ? parseInt(data.reorderThreshold) : null
+            };
+            const call = isEdit
+                ? ApiService.updateInventory(existing.id, payload)
+                : ApiService.createInventory(payload);
+            call.then(result => {
+                modal.hide();
+                showSuccess(isEdit ? 'Inventory updated!' : 'Inventory entry added!');
+                if (isEdit) {
+                    const idx = _invItems.findIndex(i => i.id === existing.id);
+                    if (idx !== -1) _invItems[idx] = result;
+                } else {
+                    _invItems.push(result);
+                }
+                renderInventoryTable(_invItems);
+            }).catch(e => showError(e.message));
         }
     });
 
     const modal = createModal({
         id: 'inventory-form-modal',
-        title: 'Add Inventory Entry',
+        title: isEdit ? 'Edit Inventory Entry' : 'Add Inventory Entry',
         content: form, size: 'medium', footer: false
     });
     modal.show();
